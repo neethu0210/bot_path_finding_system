@@ -18,7 +18,7 @@ Key features include:
    erl
 
 2. **Run Test Cases**: 
-    You can test the Bot Pathfinding System by running the following commands in the Erlang shell:
+    You can test the Bot Pathfinding System by running the following commands in the Erlang shell:  
     **Test Case 1**:
     ```bash
     bot_paths:spawn_bots([{0,0}, {9,9}, {0,9}, {9,0}, {5,5}]).

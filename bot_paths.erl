@@ -15,7 +15,7 @@ spawn_bots(Sources) ->
         io:format("Bot ~p Insert Result: ~p~n", [Id, Result])
     end, lists:zip(lists:seq(1, length(Sources)), Sources)).
 
--spec request_paths([{position()}]) -> ok.
+-spec request_paths([{position()}]) -> {ok, [{integer(), [position()]}]} | {error, []}.
 request_paths(Goals) ->
     {atomic, Bots} = mnesia:transaction(fun() -> mnesia:match_object({bot, '_', '_'}) end),
     BotPositions = [{Id, Pos} || {bot, Id, Pos} <- Bots],
@@ -35,7 +35,9 @@ request_paths(Goals) ->
             lists:foreach(fun({BotId, Path}) ->
                 grid_mnesia:reserve_path(Path, BotId)
             end, Paths),
-            print_paths(lists:map(fun({BotId, Path}) -> {BotId, lists:reverse(Path)} end, Paths));
+            ReversedPaths = [{BotId, lists:reverse(Path)} || {BotId, Path} <- Paths],
+            print_paths(ReversedPaths),
+            {ok, ReversedPaths};
         {error, _BlockedBots} ->
             retry_path_assignment(SortedBotPositions, Goals, FullReservation, 50)
     end.
@@ -55,9 +57,10 @@ find_paths_for_all_pairs([{{BotId, Start}, Goal} | Rest], Reserved, Acc) ->
         {ok, Path} -> find_paths_for_all_pairs(Rest, Reserved ++ Path, [{BotId, Path} | Acc])
     end.
 
--spec retry_path_assignment([{integer(), position()}], [position()], [position()], integer()) -> ok.
+-spec retry_path_assignment([{integer(), position()}], [position()], [position()], integer()) -> {ok, [{integer(), [position()]}]} | {error, []}.
 retry_path_assignment(_, _, _, 0) ->
-    io:format("Failed to assign paths after multiple attempts.~n");
+    io:format("Failed to assign paths after multiple attempts.~n"),
+    {error, []};
 retry_path_assignment(Bots, Goals, Reserved, Attempts) ->
     SortedBots = lists:sort(fun({Id1, _}, {Id2, _}) -> Id1 < Id2 end, Bots),
     BotGoalPairs = lists:zip(SortedBots, Goals),
@@ -69,7 +72,9 @@ retry_path_assignment(Bots, Goals, Reserved, Attempts) ->
             lists:foreach(fun({BotId, Path}) ->
                 grid_mnesia:reserve_path(Path, BotId)
             end, Paths),
-            print_paths(lists:map(fun({BotId, Path}) -> {BotId, lists:reverse(Path)} end, Paths));
+            ReversedPaths = [{BotId, lists:reverse(Path)} || {BotId, Path} <- Paths],
+            print_paths(ReversedPaths),
+            {ok, ReversedPaths};
         {error, _BlockedBots} ->
             retry_path_assignment(Bots, Goals, Reserved, Attempts - 1)
     end.

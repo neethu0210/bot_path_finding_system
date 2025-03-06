@@ -37,7 +37,7 @@ request_paths(Goals) ->
             end, Paths),
             print_paths(lists:map(fun({BotId, Path}) -> {BotId, lists:reverse(Path)} end, Paths));
         {error, _BlockedBots} ->
-            retry_path_assignment(SortedBotPositions, Goals, FullReservation, 10)
+            retry_path_assignment(SortedBotPositions, Goals, FullReservation, 50)
     end.
 
 -spec find_paths_for_all([{integer(), position()}], [position()], [position()], [{integer(), path()}]) -> {ok, [{integer(), path()}]} | {error, [integer()]}.

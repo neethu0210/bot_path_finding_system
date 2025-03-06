@@ -2,13 +2,18 @@
 
 ## Description
 
-The **Bot Pathfinding System** is an Erlang-based solution designed to manage the movement and pathfinding of **5 bots** within a **10x10 grid**. Each bot is spawned at a specific position and has a goal to reach. The system calculates the best path for each bot, considering any grid reservations and obstacles. The bots' movements and assignments are efficiently handled using the **A* (A-star)** algorithm.
+The **Bot Pathfinding System** is an Erlang-based implementation that manages the movement of **5 autonomous bots** on a **10x10 grid** using the **A* (A-star) algorithm**.
 
-Key features include:
-- **10x10 Grid**: The grid is stored and managed in **Mnesia**.
-- **5 Bots**: The system spawns 5 bots at different grid positions.
-- **Concurrent Path Requests**: Bots request their paths concurrently.
-- **Path Reservation**: The system ensures that paths are reserved with no collisions, ensuring smooth navigation for each bot.
+The bots operate within a **10x10 grid**, where each cell represents a **coordinate (X, Y)**. The grid is stored and managed using **Mnesia**, Erlang’s distributed database, allowing concurrent access and updates.
+
+A total of **5 bots** are spawned at different locations on the grid, each with a designated target destination. The system calculates the optimal path using the **A* algorithm**, considering obstacles, reserved paths, and efficient routing. Bots request paths concurrently, allowing multiple bots to calculate their path plans simultaneously.
+
+To prevent conflicts, the system tries to **reserve grid cells** in advance for each bot’s path, ensuring that no two bots have conflicting routes.
+
+If any bot’s path cannot be reserved due to conflicts with other bots' paths, the system does not attempt to adjust only that bot’s route. Instead, **all bots are shuffled**, and their paths are **recalculated together**. This process is repeated up to **50 times** to find a feasible set of non-conflicting path reservations.
+
+If, after **50 attempts**, the system is still unable to assign valid paths to all bots, it returns the message:
+**"Failed to assign paths after multiple attempts."**
 
 ## How to Run
 

@@ -1,22 +1,51 @@
 -module(bot_paths_test).
 -include_lib("eunit/include/eunit.hrl").
 
-setup() ->
-    mnesia:start(),
-    grid_mnesia:init(),
-    grid_mnesia:initialize_grid(10),
-    ok.
+all_test_() ->
+    {
+        setup,
+        fun() ->
+            mnesia:start(),
+            grid_mnesia:init(),
+            grid_mnesia:initialize_grid(10)
+        end,
+        fun(_) ->
+            mnesia:stop(),
+            mnesia:delete_schema([node()])
+        end,
+        [
+            {
+                "TestCase 1: Spawn bots and verify positions",
+                fun() ->
+                    bot_paths:spawn_bots([{1, 1}, {2, 2}, {3, 3}]),
+                    {atomic, Bots} = mnesia:transaction(fun() -> mnesia:match_object({bot, '_', '_'}) end),
+                    ExpectedBots = [{bot, 1, {1, 1}}, {bot, 2, {2, 2}}, {bot, 3, {3, 3}}],
+                    ?assertEqual(lists:sort(ExpectedBots), lists:sort(Bots))
+                end
+            },
+            {
+                "TestCase 2: Request paths for multiple bots",
+                fun() ->
+                    Starts1 = [{0,0}, {9,9}, {0,9}, {9,0}, {5,5}],
+                    Goals1 = [{4,4}, {5,9}, {9,4}, {4,0}, {6,6}],
+                    bot_paths:spawn_bots(Starts1),
+                    {ok, Paths1} = bot_paths:request_paths(Goals1),
+                    ?assert(validate_paths(Starts1, Goals1, Paths1)),
 
-cleanup() ->
-    mnesia:stop(),
-    mnesia:delete_schema([node()]),
-    ok.
+                    Starts2 = [{1,1}, {8,8}, {1,8}, {8,1}, {4,4}],
+                    Goals2 = [{7,7}, {2,2}, {7,2}, {2,7}, {5,5}],
+                    bot_paths:spawn_bots(Starts2),
+                    {ok, Paths2} = bot_paths:request_paths(Goals2),
+                    ?assert(validate_paths(Starts2, Goals2, Paths2)),
 
-spawn_bots_test() ->
-    bot_paths:spawn_bots([{1, 1}, {2, 2}, {3, 3}]),
-    {atomic, Bots} = mnesia:transaction(fun() -> mnesia:match_object({bot, '_', '_'}) end),
-    ExpectedBots = [{bot, 1, {1, 1}}, {bot, 2, {2, 2}}, {bot, 3, {3, 3}}],
-    ?assertEqual(lists:sort(ExpectedBots), lists:sort(Bots)).
+                    Starts3 = [{0,0}, {9,9}, {4,4}, {0,9}, {9,0}],
+                    Goals3 = [{9,0}, {0,9}, {2,2}, {7,7}, {3,3}],
+                    bot_paths:spawn_bots(Starts3),
+                    ?assertMatch({error, []}, bot_paths:request_paths(Goals3))
+                end
+            }
+        ]
+    }.
 
 validate_paths(Starts, Goals, Paths) ->
     SortedPaths = lists:sort(fun({Id1, _}, {Id2, _}) -> Id1 < Id2 end, Paths),
@@ -33,30 +62,3 @@ validate_paths(Starts, Goals, Paths) ->
                 (Start =:= ExpectedStart) and (End =:= ExpectedGoal)
         end
     end, SortedPaths).
-
-request_paths_test() ->
-    Starts1 = [{0,0}, {9,9}, {0,9}, {9,0}, {5,5}],
-    Goals1 = [{4,4}, {5,9}, {9,4}, {4,0}, {6,6}],
-    bot_paths:spawn_bots(Starts1),
-    {ok, Paths1} = bot_paths:request_paths(Goals1),
-    ?assert(validate_paths(Starts1, Goals1, Paths1)),
-
-    Starts2 = [{1,1}, {8,8}, {1,8}, {8,1}, {4,4}],
-    Goals2 = [{7,7}, {2,2}, {7,2}, {2,7}, {5,5}],
-    bot_paths:spawn_bots(Starts2),
-    {ok, Paths2} = bot_paths:request_paths(Goals2),
-    ?assert(validate_paths(Starts2, Goals2, Paths2)),
-
-    Starts3 = [{0,0}, {9,9}, {4,4}, {0,9}, {9,0}],
-    Goals3 = [{9,0}, {0,9}, {2,2}, {7,7}, {3,3}],
-    bot_paths:spawn_bots(Starts3),
-    ?assertMatch({error, []}, bot_paths:request_paths(Goals3)).
-
-instantiator() ->
-    [
-        fun() -> spawn_bots_test() end,
-        fun() -> request_paths_test() end
-    ].
-
-all_test_() ->
-    {setup, fun setup/0, fun cleanup/0, instantiator()}.

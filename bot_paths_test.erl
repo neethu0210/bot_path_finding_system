@@ -49,16 +49,22 @@ all_test_() ->
 
 validate_paths(Starts, Goals, Paths) ->
     SortedPaths = lists:sort(fun({Id1, _}, {Id2, _}) -> Id1 < Id2 end, Paths),
+    
     lists:foreach(fun({BotId, Path}) ->
         io:format("Bot ~p -> Path: ~p~n", [BotId, Path])
     end, SortedPaths),
-    lists:all(fun({BotId, Path}) ->
+    ValidPaths = lists:all(fun({BotId, Path}) ->
         case Path of
             [Start | _] = FullPath ->
                 End = lists:last(FullPath),
                 {_, ExpectedStart} = lists:keyfind(BotId, 1, lists:zip(lists:seq(1, length(Starts)), Starts)),
                 {_, ExpectedGoal} = lists:keyfind(BotId, 1, lists:zip(lists:seq(1, length(Goals)), Goals)),
-                io:format("Validating bot ~p: Expected Start: ~p, Actual Start: ~p, Expected End: ~p, Actual End: ~p~n",[BotId, ExpectedStart, Start, ExpectedGoal, End]),
+                io:format("Validating bot ~p: Expected Start: ~p, Actual Start: ~p, Expected End: ~p, Actual End: ~p~n",
+                          [BotId, ExpectedStart, Start, ExpectedGoal, End]),
                 (Start =:= ExpectedStart) and (End =:= ExpectedGoal)
         end
-    end, SortedPaths).
+    end, SortedPaths),
+    AllCoordinates = lists:flatten([Path || {_, Path} <- SortedPaths]),
+    UniqueCoordinates = lists:usort(AllCoordinates),
+    PathsDoNotCross = (length(AllCoordinates) =:= length(UniqueCoordinates)),
+    ValidPaths and PathsDoNotCross.

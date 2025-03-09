@@ -49,10 +49,7 @@ all_test_() ->
 
 validate_paths(Starts, Goals, Paths) ->
     SortedPaths = lists:sort(fun({Id1, _}, {Id2, _}) -> Id1 < Id2 end, Paths),
-    
-    lists:foreach(fun({BotId, Path}) ->
-        io:format("Bot ~p -> Path: ~p~n", [BotId, Path])
-    end, SortedPaths),
+    lists:foreach(fun({BotId, Path}) -> io:format("Bot ~p -> Path: ~p~n", [BotId, Path]) end, SortedPaths),
     ValidPaths = lists:all(fun({BotId, Path}) ->
         case Path of
             [Start | _] = FullPath ->

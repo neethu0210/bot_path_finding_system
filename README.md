@@ -19,9 +19,9 @@ If, after **50 attempts**, the system is still unable to assign valid paths to a
 
 For a detailed explanation of the implementation, refer to the **full documentation** for each module:
 
-[Grid Mnesia Module Documentation](docs/grid_mnesia_documentation.md) - Manages the 10x10 grid, bot positions, obstacles, and reservations using Mnesia.
-[A-star Module Documentation](docs/astar_documentation.md) - Implements A* pathfinding, handling heuristic calculations and optimal route selection.
-[Bot Paths Module Documentation](docs/bot_paths_documentation.md) - Coordinates bot spawning, path requests, and conflict resolution strategies.
+[Grid Mnesia Module Documentation](docs/grid_mnesia_documentation.md) - Manages the 10x10 grid, bot positions, obstacles, and reservations using Mnesia.  
+[A-star Module Documentation](docs/astar_documentation.md) - Implements A* pathfinding, handling heuristic calculations and optimal route selection.  
+[Bot Paths Module Documentation](docs/bot_paths_documentation.md) - Coordinates bot spawning, path requests, and conflict resolution strategies.  
 
 ## How to Run
 
